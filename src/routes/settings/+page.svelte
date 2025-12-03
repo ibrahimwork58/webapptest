@@ -6,6 +6,7 @@
   let currentTheme: 'light' | 'dark' | 'system' = 'system';
   let canInstall = false;
   let deferredPrompt: any;
+  let isFullscreen = false;
   
   onMount(() => {
     // Subscribe to theme store
@@ -19,9 +20,32 @@
       deferredPrompt = e;
       canInstall = true;
     });
+
+    // Check fullscreen state
+    const checkFullscreen = () => {
+      isFullscreen = !!document.fullscreenElement;
+    };
     
-    return unsubscribe;
+    document.addEventListener('fullscreenchange', checkFullscreen);
+    checkFullscreen();
+    
+    return () => {
+      unsubscribe();
+      document.removeEventListener('fullscreenchange', checkFullscreen);
+    };
   });
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((e) => {
+        console.log('Error attempting to enable fullscreen mode:', e);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }
   
   function handleThemeToggle() {
     theme.toggle();
@@ -88,6 +112,31 @@
             class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-medium transition-smooth gpu-accelerated active:scale-95"
           >
             Toggle
+          </button>
+        </div>
+      </div>
+
+      <!-- Full Screen Setting -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="text-2xl">
+              ⛶
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Full Screen
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                {isFullscreen ? 'Enabled' : 'Disabled'}
+              </p>
+            </div>
+          </div>
+          <button
+            on:click={toggleFullscreen}
+            class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-xl font-medium transition-smooth gpu-accelerated active:scale-95"
+          >
+            {isFullscreen ? 'Exit' : 'Enter'}
           </button>
         </div>
       </div>
